@@ -27,4 +27,33 @@ describe('tokens do tema Rosa Elegante', () => {
       expect(value % 4).toBe(0);
     }
   });
+
+  // Object.values() passa mesmo se uma chave nomeada desaparecer; as Tarefas 5 e 6
+  // dependem dos NOMES, então eles precisam de asserção própria.
+  it('expõe as chaves de espaçamento e raio que as telas consomem', () => {
+    for (const key of ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'] as const) {
+      expect(spacing[key]).toBeGreaterThan(0);
+    }
+    for (const key of ['card', 'item', 'tabBar', 'pill'] as const) {
+      expect(radii[key]).toBeGreaterThan(0);
+    }
+  });
+
+  it('expõe as cores que os ícones e os componentes base consomem', () => {
+    for (const key of [
+      'background',
+      'surface',
+      'line',
+      'accent',
+      'accentSoft',
+      'text',
+      'textMuted',
+      'danger',
+      'income',
+      'expense',
+      'noCategory',
+    ] as const) {
+      expect(colors[key]).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    }
+  });
 });
