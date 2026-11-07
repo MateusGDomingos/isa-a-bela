@@ -1,39 +1,39 @@
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 import { colors, fonts, radii, spacing } from '@/src/theme/tokens';
 
-export type CampoProps = Omit<TextInputProps, 'value' | 'onChangeText'> & {
-  rotulo: string;
-  valor: string;
-  onChangeText: (texto: string) => void;
-  erro?: string;
+export type TextFieldProps = Omit<TextInputProps, 'value' | 'onChangeText'> & {
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  error?: string;
 };
 
-export function Campo({ rotulo, valor, onChangeText, erro, ...resto }: CampoProps) {
+export function TextField({ label, value, onChangeText, error, ...rest }: TextFieldProps) {
   return (
     <View style={{ marginBottom: spacing.md }}>
-      <Text style={estilos.rotulo}>{rotulo}</Text>
+      <Text style={styles.label}>{label}</Text>
       <TextInput
-        accessibilityLabel={rotulo}
-        accessibilityHint={erro}
-        value={valor}
+        accessibilityLabel={label}
+        accessibilityHint={error}
+        value={value}
         onChangeText={onChangeText}
         placeholderTextColor={colors.textMuted}
-        style={[estilos.campo, erro ? { borderColor: colors.danger } : null]}
-        {...resto}
+        style={[styles.field, error ? { borderColor: colors.danger } : null]}
+        {...rest}
       />
-      {erro ? <Text style={estilos.erro}>{erro}</Text> : null}
+      {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
 }
 
-const estilos = StyleSheet.create({
-  rotulo: {
+const styles = StyleSheet.create({
+  label: {
     fontFamily: fonts.bodyStrong,
     fontSize: 12,
     color: colors.textMuted,
     marginBottom: spacing.xs,
   },
-  campo: {
+  field: {
     fontFamily: fonts.body,
     fontSize: 16,
     color: colors.text,
@@ -44,7 +44,7 @@ const estilos = StyleSheet.create({
     paddingHorizontal: spacing.md,
     minHeight: 48,
   },
-  erro: {
+  error: {
     fontFamily: fonts.body,
     fontSize: 12,
     color: colors.danger,

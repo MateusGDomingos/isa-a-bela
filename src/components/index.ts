@@ -1,4 +1,4 @@
-export { Botao, type BotaoProps } from '@/src/components/Botao';
-export { Campo, type CampoProps } from '@/src/components/Campo';
-export { Cartao } from '@/src/components/Cartao';
-export { EstadoVazio, type EstadoVazioProps } from '@/src/components/EstadoVazio';
+export { Button, type ButtonProps } from '@/src/components/Button';
+export { TextField, type TextFieldProps } from '@/src/components/TextField';
+export { Card } from '@/src/components/Card';
+export { EmptyState, type EmptyStateProps } from '@/src/components/EmptyState';

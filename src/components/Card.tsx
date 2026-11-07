@@ -1,16 +1,16 @@
 import { StyleSheet, View, type ViewProps } from 'react-native';
 import { colors, radii, spacing } from '@/src/theme/tokens';
 
-export function Cartao({ children, style, ...resto }: ViewProps) {
+export function Card({ children, style, ...rest }: ViewProps) {
   return (
-    <View style={[estilos.cartao, style]} {...resto}>
+    <View style={[styles.card, style]} {...rest}>
       {children}
     </View>
   );
 }
 
-const estilos = StyleSheet.create({
-  cartao: {
+const styles = StyleSheet.create({
+  card: {
     backgroundColor: colors.surface,
     borderRadius: radii.card,
     borderWidth: 1,

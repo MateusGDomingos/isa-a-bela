@@ -1,68 +1,68 @@
 import { useState } from 'react';
 import { render, screen, userEvent } from '@testing-library/react-native';
-import { Botao, Campo, EstadoVazio } from '@/src/components';
+import { Button, TextField, EmptyState } from '@/src/components';
 
 // `userEvent.type()` acumula o texto digitado sobre a prop `value` atual do TextInput
 // (ver docs/api/user-event.md do @testing-library/react-native: "This function will add
 // text to the text already present in the text input, as specified by `value` ... props").
-// Um `valor` fixo (sem recontrolar o componente a cada toque de tecla) faz cada chamada de
+// Um `value` fixo (sem recontrolar o componente a cada toque de tecla) faz cada chamada de
 // `onChangeText` carregar só o caractere mais novo — confirmado via instrumentação, que
 // mostrou chamadas como ["A"], ["ç"], ... terminando num surrogate solto do emoji. Este
-// invólucro controlado devolve o texto para `valor` a cada mudança, como uma tela real
+// invólucro controlado devolve o texto para `value` a cada mudança, como uma tela real
 // faria, permitindo que o teste calculo o texto acumulado corretamente — sem alterar a
 // asserção, que é a especificação.
-function CampoControlado({ onChangeText }: { onChangeText: (texto: string) => void }) {
-  const [valor, setValor] = useState('');
+function ControlledTextField({ onChangeText }: { onChangeText: (text: string) => void }) {
+  const [value, setValue] = useState('');
   return (
-    <Campo
-      rotulo="Descrição"
-      valor={valor}
-      onChangeText={(texto) => {
-        setValor(texto);
-        onChangeText(texto);
+    <TextField
+      label="Descrição"
+      value={value}
+      onChangeText={(text) => {
+        setValue(text);
+        onChangeText(text);
       }}
     />
   );
 }
 
-describe('Botao', () => {
+describe('Button', () => {
   it('chama onPress quando tocado', async () => {
     const onPress = jest.fn();
-    await render(<Botao titulo="Salvar" onPress={onPress} />);
+    await render(<Button title="Salvar" onPress={onPress} />);
     await userEvent.press(screen.getByText('Salvar'));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
   it('não chama onPress quando desabilitado', async () => {
     const onPress = jest.fn();
-    await render(<Botao titulo="Salvar" onPress={onPress} desabilitado />);
+    await render(<Button title="Salvar" onPress={onPress} disabled />);
     await userEvent.press(screen.getByText('Salvar'));
     expect(onPress).not.toHaveBeenCalled();
   });
 
   it('não chama onPress enquanto carrega e anuncia o estado', async () => {
     const onPress = jest.fn();
-    await render(<Botao titulo="Salvar" onPress={onPress} carregando />);
+    await render(<Button title="Salvar" onPress={onPress} loading />);
     expect(screen.getByLabelText('Salvando')).toBeTruthy();
     await userEvent.press(screen.getByLabelText('Salvando'));
     expect(onPress).not.toHaveBeenCalled();
   });
 });
 
-describe('Campo', () => {
+describe('TextField', () => {
   it('mostra o rótulo e o valor', async () => {
-    await render(<Campo rotulo="Descrição" valor="Mercado" onChangeText={jest.fn()} />);
+    await render(<TextField label="Descrição" value="Mercado" onChangeText={jest.fn()} />);
     expect(screen.getByText('Descrição')).toBeTruthy();
     expect(screen.getByDisplayValue('Mercado')).toBeTruthy();
   });
 
   it('mostra a mensagem de erro embaixo do campo e a anuncia no leitor de tela', async () => {
     await render(
-      <Campo
-        rotulo="Valor"
-        valor="abc"
+      <TextField
+        label="Valor"
+        value="abc"
         onChangeText={jest.fn()}
-        erro="Digite um valor maior que zero"
+        error="Digite um valor maior que zero"
       />,
     );
     expect(screen.getByText('Digite um valor maior que zero')).toBeTruthy();
@@ -72,26 +72,26 @@ describe('Campo', () => {
   });
 
   it('não deixa dica de acessibilidade pendurada quando não há erro', async () => {
-    await render(<Campo rotulo="Valor" valor="10" onChangeText={jest.fn()} />);
+    await render(<TextField label="Valor" value="10" onChangeText={jest.fn()} />);
     expect(screen.getByLabelText('Valor').props.accessibilityHint).toBeUndefined();
   });
 
   it('preserva acentos e emoji digitados', async () => {
     const onChangeText = jest.fn();
-    await render(<CampoControlado onChangeText={onChangeText} />);
+    await render(<ControlledTextField onChangeText={onChangeText} />);
     await userEvent.type(screen.getByLabelText('Descrição'), 'Açaí 🍧');
     expect(onChangeText).toHaveBeenLastCalledWith('Açaí 🍧');
   });
 });
 
-describe('EstadoVazio', () => {
+describe('EmptyState', () => {
   it('mostra título, descrição e a ação opcional', async () => {
     const onPress = jest.fn();
     await render(
-      <EstadoVazio
-        titulo="Nenhum gasto ainda"
-        descricao="Toque no + para registrar o primeiro."
-        acao={{ titulo: 'Registrar gasto', onPress }}
+      <EmptyState
+        title="Nenhum gasto ainda"
+        description="Toque no + para registrar o primeiro."
+        action={{ title: 'Registrar gasto', onPress }}
       />,
     );
     expect(screen.getByText('Nenhum gasto ainda')).toBeTruthy();
@@ -101,7 +101,7 @@ describe('EstadoVazio', () => {
   });
 
   it('funciona sem ação', async () => {
-    await render(<EstadoVazio titulo="Nada aqui" descricao="Por enquanto." />);
+    await render(<EmptyState title="Nada aqui" description="Por enquanto." />);
     expect(screen.getByText('Nada aqui')).toBeTruthy();
   });
 });
