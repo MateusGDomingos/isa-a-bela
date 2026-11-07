@@ -23,6 +23,13 @@ create policy profiles_select_own on public.profiles
 create policy profiles_update_own on public.profiles
   for update using (id = auth.uid()) with check (id = auth.uid());
 
+-- RLS filtra LINHA, não coluna: a política acima libera todas as colunas da
+-- própria linha, inclusive is_admin. Sem o recorte abaixo, qualquer pessoa
+-- logada se promove a administradora e passa a ler o painel de uso.
+revoke update on public.profiles from anon, authenticated;
+grant update (name, privacy_accepted_at, privacy_version, location_consent, analytics_consent)
+  on public.profiles to authenticated;
+
 -- ---------- categories ----------
 create table public.categories (
   id uuid primary key default gen_random_uuid(),
@@ -55,7 +62,7 @@ create policy categories_delete_own on public.categories
 create or replace function public.seed_default_categories(p_user uuid)
 returns void
 language sql
-security definer
+security invoker
 set search_path = public
 as $$
   insert into public.categories (user_id, name, kind, color, is_default)
@@ -75,11 +82,19 @@ as $$
     (p_user, 'Outros',      'income',  '#9A7482', true);
 $$;
 
+-- Função interna: só o gatilho a chama. O Supabase local concede EXECUTE
+-- automaticamente a anon/authenticated/service_role via ALTER DEFAULT
+-- PRIVILEGES do schema public (além do PUBLIC padrão do Postgres); sem
+-- revogar de todos eles, qualquer pessoa — inclusive sem login — insere
+-- categorias na conta de outra.
+revoke all on function public.seed_default_categories(uuid)
+  from public, anon, authenticated, service_role;
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, auth
+set search_path = public
 as $$
 begin
   insert into public.profiles (id, name, is_guest)

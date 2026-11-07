@@ -1,6 +1,6 @@
 begin;
 \ir helpers.sql
-select plan(14);
+select plan(18);
 
 select test_create_user('11111111-1111-1111-1111-111111111111', 'isa@exemplo.com');
 select test_create_user('22222222-2222-2222-2222-222222222222', 'outra@exemplo.com');
@@ -87,6 +87,28 @@ select throws_ok(
   $$ insert into public.categories (user_id, name, kind, color)
      values ('11111111-1111-1111-1111-111111111111', 'Cor ruim', 'expense', 'rosa') $$,
   '23514', null, 'cor fora do formato hexadecimal é recusada'
+);
+
+-- escalada de privilégio e função interna exposta: as duas falhas que a
+-- revisão da Tarefa 7 explorou no banco vivo
+select throws_ok(
+  $$ update public.profiles set is_admin = true where id = auth.uid() $$,
+  '42501', null, 'o usuário não consegue se promover a administrador'
+);
+
+select is(
+  (select is_admin from public.profiles where id = auth.uid()),
+  false, 'is_admin continua falso depois da tentativa'
+);
+
+select lives_ok(
+  $$ update public.profiles set name = 'Isa Bela' where id = auth.uid() $$,
+  'o usuário ainda edita o próprio nome'
+);
+
+select throws_ok(
+  $$ select public.seed_default_categories('22222222-2222-2222-2222-222222222222') $$,
+  '42501', null, 'seed_default_categories não é chamável por usuário autenticado'
 );
 
 select * from finish();
