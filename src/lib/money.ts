@@ -9,7 +9,7 @@ export function formatBRL(cents: number): string {
   // O Intl do pt-BR separa "R$" do número com espaço rígido (U+00A0) e produz
   // "-R$ 25,00" para negativos, que é o formato desejado. O replace troca o
   // espaço rígido pelo espaço comum que a interface e os testes esperam.
-  return BRL.format(cents / 100).replace(/ /g, ' ');
+  return BRL.format(cents / 100).replace(/\u00a0/g, ' ');
 }
 
 /**
@@ -22,7 +22,7 @@ export function formatBRL(cents: number): string {
  */
 export function parseAmountToCents(input: string): number | null {
   // \s não cobre o espaço rígido em todo runtime, então U+00A0 entra explícito.
-  const cleaned = input.replace(/[\s ]/g, '').replace(/^R\$/i, '');
+  const cleaned = input.replace(/[\s\u00a0]/g, '').replace(/^R\$/i, '');
   if (!/^[0-9.,]+$/.test(cleaned)) return null;
 
   const hasComma = cleaned.includes(',');

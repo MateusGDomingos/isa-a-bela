@@ -46,6 +46,7 @@ describe('parseAmountToCents', () => {
 
   it('ignora espaço comum e espaço rígido colados do navegador', () => {
     expect(parseAmountToCents('R$ 1.234,56')).toBe(123456);
+    expect(parseAmountToCents('R$ \u00a01.234,56')).toBe(123456);
   });
 });
 
