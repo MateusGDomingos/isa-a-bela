@@ -20,7 +20,7 @@ select is(
      from pg_class c
      join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public'
-      and c.relkind = 'r'
+      and c.relkind in ('r', 'p')
       and not c.relrowsecurity),
   0, 'toda tabela de public tem RLS habilitada'
 );
@@ -102,8 +102,12 @@ select is((select count(*)::int from afetadas), 0,
   'delete não alcança compromisso de outra pessoa');
 
 -- ---------- categories ----------
+-- `color` em vez de `name`: `name` tem unique(user_id, name, kind), e renomear todas as
+-- categorias padrão da vítima para o mesmo literal colide com essa constraint se a RLS
+-- estiver desligada — a asserção degradaria de um "not ok" limpo para uma transação
+-- abortada por 23505. `color` não tem essa restrição.
 with afetadas as (
-  update public.categories set name = 'Invadida'
+  update public.categories set color = '#000000'
    where user_id = '22222222-2222-2222-2222-222222222222'
   returning 1
 )
