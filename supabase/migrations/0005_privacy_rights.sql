@@ -26,16 +26,16 @@ security invoker
 set search_path = public
 as $$
 declare
-  v_afetados integer;
+  v_affected integer;
 begin
   update public.transactions
      set latitude = null, longitude = null, place_name = null
    where user_id = auth.uid()
      and (latitude is not null or place_name is not null);
-  get diagnostics v_afetados = row_count;
+  get diagnostics v_affected = row_count;
 
   update public.profiles set location_consent = false where id = auth.uid();
-  return v_afetados;
+  return v_affected;
 end $$;
 
 -- Eliminação (LGPD art. 18, VI). security definer porque apagar de auth.users
@@ -64,3 +64,13 @@ end $$;
 -- esta função com outro uid, já que ela corre como definer.
 revoke all on function public.delete_my_account() from public, anon, authenticated, service_role;
 grant execute on function public.delete_my_account() to authenticated;
+
+-- Fecha uma lacuna da migration 0001: handle_new_user é security definer e nunca teve o
+-- revoke (a correção da Tarefa 7 cobriu seed_default_categories, mas não a própria função
+-- do gatilho). A asserção de catálogo em 0100_isolation-test.sql pegou isso ao varrer toda
+-- função security definer de public executável por anon. Não editamos 0001 — este revoke
+-- mora aqui porque é onde a lacuna foi encontrada. O gatilho em auth.users continua
+-- funcionando: o Postgres não verifica privilégio de EXECUTE para disparar um trigger, só
+-- para chamada direta (confirmado manualmente: revogar e inserir em auth.users ainda cria
+-- o perfil e semeia as 13 categorias).
+revoke all on function public.handle_new_user() from public, anon, authenticated, service_role;

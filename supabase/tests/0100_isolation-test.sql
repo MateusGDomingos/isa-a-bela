@@ -10,7 +10,7 @@
 -- lê o catálogo para pegar a RLS desligada diretamente, em vez de por efeito colateral.
 begin;
 \ir helpers.sql
-select plan(13);
+select plan(14);
 
 -- A regressão que realmente importa, pega direto em vez de por efeito colateral:
 -- RLS desligada em qualquer tabela de `public`. Também protege o futuro — tabela nova
@@ -23,6 +23,19 @@ select is(
       and c.relkind in ('r', 'p')
       and not c.relrowsecurity),
   0, 'toda tabela de public tem RLS habilitada'
+);
+
+-- Nenhuma função `security definer` pode ser executável sem login. É a classe de brecha
+-- que a revisão da Tarefa 7 explorou duas vezes, e esta asserção vale para as funções
+-- futuras também: se uma próxima nascer sem o revoke, quebra aqui na hora.
+select is(
+  (select count(*)::int
+     from pg_proc p
+     join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.prosecdef
+      and has_function_privilege('anon', p.oid, 'EXECUTE')),
+  0, 'nenhuma função security definer de public é executável por anon'
 );
 
 select test_create_user('11111111-1111-1111-1111-111111111111', 'isa@exemplo.com');

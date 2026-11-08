@@ -20,6 +20,8 @@ insert into public.transactions (user_id, kind, amount_cents, description, occur
 values ('11111111-1111-1111-1111-111111111111', 'expense', 1000, 'Sem local', '2026-11-06');
 insert into public.tasks (user_id, title)
 values ('11111111-1111-1111-1111-111111111111', 'Minha tarefa');
+insert into public.appointments (user_id, title, starts_at)
+values ('11111111-1111-1111-1111-111111111111', 'Meu compromisso', '2026-11-08 10:00-03');
 
 -- exportação
 select is(
@@ -74,11 +76,13 @@ select is(
     where user_id = '11111111-1111-1111-1111-111111111111')
   + (select count(*)::int from public.tasks
     where user_id = '11111111-1111-1111-1111-111111111111')
+  + (select count(*)::int from public.appointments
+    where user_id = '11111111-1111-1111-1111-111111111111')
   + (select count(*)::int from public.categories
     where user_id = '11111111-1111-1111-1111-111111111111')
   + (select count(*)::int from public.profiles
     where id = '11111111-1111-1111-1111-111111111111'),
-  0, 'excluir a conta apaga perfil, categorias, lançamentos e tarefas'
+  0, 'excluir a conta apaga perfil, categorias, lançamentos, tarefas e compromissos'
 );
 
 select * from finish();
