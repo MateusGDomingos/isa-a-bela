@@ -19,15 +19,23 @@ insert into public.transactions (user_id, kind, amount_cents, description, categ
 select '11111111-1111-1111-1111-111111111111', 'expense', 5000, 'Padaria',
        (select id from public.categories where name = 'Alimentação'), '2026-11-07';
 
-insert into public.transactions (user_id, kind, amount_cents, description, occurred_on,
-                                 latitude, longitude, place_name)
+-- Estes três PRECISAM ter categoria, e não pode ser 'Alimentação'. É o que mantém os
+-- baldes da pizza distintos depois da exclusão mais abaixo: 'Sem categoria' fica com os
+-- 20000 cuja categoria foi excluída, e 'Compras' com os 15000 que seguem categorizados.
+-- Sem categoria aqui, tudo desaba num balde único de 35000 e a asserção deixa de provar
+-- que o valor da categoria excluída sobreviveu — ela passaria pelo motivo errado.
+insert into public.transactions (user_id, kind, amount_cents, description, category_id,
+                                 occurred_on, latitude, longitude, place_name)
 values
-  ('11111111-1111-1111-1111-111111111111', 'expense', 8900, 'Compra grande', '2026-11-06',
-   -21.7587, -43.3496, 'Supermercado Bahamas'),
-  ('11111111-1111-1111-1111-111111111111', 'expense', 2100, 'Compra pequena', '2026-11-20',
-   -21.7589, -43.3498, 'Supermercado Bahamas'),
-  ('11111111-1111-1111-1111-111111111111', 'expense', 4000, 'Farmácia', '2026-11-10',
-   -21.7600, -43.3500, 'Drogaria Central');
+  ('11111111-1111-1111-1111-111111111111', 'expense', 8900, 'Compra grande',
+   (select id from public.categories where name = 'Compras' and kind = 'expense'),
+   '2026-11-06', -21.7587, -43.3496, 'Supermercado Bahamas'),
+  ('11111111-1111-1111-1111-111111111111', 'expense', 2100, 'Compra pequena',
+   (select id from public.categories where name = 'Compras' and kind = 'expense'),
+   '2026-11-20', -21.7589, -43.3498, 'Supermercado Bahamas'),
+  ('11111111-1111-1111-1111-111111111111', 'expense', 4000, 'Farmácia',
+   (select id from public.categories where name = 'Compras' and kind = 'expense'),
+   '2026-11-10', -21.7600, -43.3500, 'Drogaria Central');
 
 -- monthly_totals
 select is(
@@ -61,14 +69,10 @@ select is(
 -- expenses_by_category com categoria excluída
 delete from public.categories where name = 'Alimentação' and kind = 'expense';
 
--- Os três lançamentos com local inseridos acima nunca tiveram categoria, então
--- já entravam em "Sem categoria" antes do delete (15000). Depois do delete os
--- 20000 de "Alimentação" se juntam a eles: o total correto é 35000, não 20000
--- isolado — valor corrigido após somar à mão e confirmar contra o banco.
 select is(
   (select total_cents from public.expenses_by_category('2026-11-01')
     where name = 'Sem categoria'),
-  35000::bigint, 'gastos de categoria excluída somam em "Sem categoria"'
+  20000::bigint, 'gastos de categoria excluída somam em "Sem categoria"'
 );
 
 select is(
