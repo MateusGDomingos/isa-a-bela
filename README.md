@@ -61,7 +61,9 @@ Veja `.env.example`. Todas são públicas (prefixo `EXPO_PUBLIC_`) e ficam embut
 
 ## Segredos (apenas em GitHub Secrets)
 
-Estes valores nunca devem entrar no `.env`/`.env.example` nem no bundle do app. Ficam **somente** configurados como GitHub Secrets, para uso em CI/CD:
+Estes valores nunca devem entrar no `.env`/`.env.example` nem no bundle do app. Ficam **somente** configurados como GitHub Secrets, para uso em CI/CD.
+
+**Ainda não estão configurados**, e o `ci.yml` atual não usa nenhum deles: a lista existe porque o workflow de publicação (migrations em produção e deploy na Vercel) é de uma fase posterior do projeto. Hoje o pipeline só valida.
 
 - `SUPABASE_ACCESS_TOKEN`
 - `SUPABASE_DB_PASSWORD`
