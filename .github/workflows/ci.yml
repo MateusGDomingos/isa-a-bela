@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint e formatação
+        run: npm run lint
+
+      - name: Checagem de tipos
+        run: npm run typecheck
+
+      - name: Testes de unidade e componente
+        run: npm test
+
+      - name: Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Banco local e migrations
+        run: supabase start
+
+      - name: Testes de banco (pgTAP)
+        run: supabase test db supabase/tests/*-test.sql
+
+      - name: Auditoria de dependências
+        run: npm audit --audit-level=high
+
+      - name: Segredo vazado
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
