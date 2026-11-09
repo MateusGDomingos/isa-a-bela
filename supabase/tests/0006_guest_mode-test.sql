@@ -13,6 +13,8 @@ select is(
 -- visitante recebe
 select test_create_user('33333333-3333-3333-3333-333333333333', 'visitante@exemplo.com', true);
 
+-- 42 = 7 lançamentos por mês × 6 meses (5 sem local + 2 com local); 12 = 2 com local × 6.
+-- Mexer na quantidade de linhas por mês em seed_guest_data exige atualizar os dois números.
 select is(
   (select count(*)::int from public.transactions
     where user_id = '33333333-3333-3333-3333-333333333333'),

@@ -9,45 +9,103 @@ as $$
 declare
   v_mes integer;
   v_dia date;
+  -- As nove categorias que o demo usa. 'Outros' fica de fora de propósito: é a
+  -- categoria de escape, e um demo que cai nela não demonstra nada.
   v_cat_alimentacao uuid;
+  v_cat_moradia uuid;
   v_cat_transporte uuid;
+  v_cat_saude uuid;
+  v_cat_educacao uuid;
   v_cat_beleza uuid;
   v_cat_lazer uuid;
+  v_cat_compras uuid;
   v_cat_salario uuid;
+  -- Dois lançamentos sem local e um com local giram por mês, num ciclo de três.
+  -- Sem isso o demo repete a mesma pizza e o mesmo mapa seis vezes, e quem folheia
+  -- os meses percebe que o dado é semeado.
+  v_cat_gira_a uuid; v_desc_gira_a text; v_val_gira_a integer;
+  v_cat_gira_b uuid; v_desc_gira_b text; v_val_gira_b integer;
+  v_lugar_a text; v_lat_a numeric; v_lon_a numeric;
+  v_desc_b text;  v_val_b integer;
+  v_lugar_b text; v_lat_b numeric; v_lon_b numeric;
 begin
   select id into v_cat_alimentacao from public.categories
     where user_id = p_user and name = 'Alimentação' and kind = 'expense';
+  select id into v_cat_moradia from public.categories
+    where user_id = p_user and name = 'Moradia' and kind = 'expense';
   select id into v_cat_transporte from public.categories
     where user_id = p_user and name = 'Transporte' and kind = 'expense';
+  select id into v_cat_saude from public.categories
+    where user_id = p_user and name = 'Saúde' and kind = 'expense';
+  select id into v_cat_educacao from public.categories
+    where user_id = p_user and name = 'Educação' and kind = 'expense';
   select id into v_cat_beleza from public.categories
     where user_id = p_user and name = 'Beleza' and kind = 'expense';
   select id into v_cat_lazer from public.categories
     where user_id = p_user and name = 'Lazer' and kind = 'expense';
+  select id into v_cat_compras from public.categories
+    where user_id = p_user and name = 'Compras' and kind = 'expense';
   select id into v_cat_salario from public.categories
     where user_id = p_user and name = 'Salário' and kind = 'income';
 
-  -- seis meses de histórico, incluindo o mês corrente
+  -- Seis meses de histórico, incluindo o mês corrente. SETE lançamentos por mês
+  -- (cinco sem local, dois com local) — é de onde saem as contagens 42 e 12 nos
+  -- testes. Mexer na quantidade de linhas por mês exige atualizar os dois números.
   for v_mes in 0..5 loop
     v_dia := (date_trunc('month', current_date) - make_interval(months => v_mes))::date;
 
+    -- Ciclo de três meses: a composição da pizza muda a cada mês.
+    v_cat_gira_a := case v_mes % 3 when 0 then v_cat_transporte
+                                   when 1 then v_cat_saude
+                                   else v_cat_educacao end;
+    v_desc_gira_a := case v_mes % 3 when 0 then 'Combustível'
+                                    when 1 then 'Farmácia'
+                                    else 'Curso online' end;
+    v_val_gira_a := case v_mes % 3 when 0 then 12000 when 1 then 8700 else 14900 end;
+
+    v_cat_gira_b := case v_mes % 3 when 0 then v_cat_beleza
+                                   when 1 then v_cat_lazer
+                                   else v_cat_compras end;
+    v_desc_gira_b := case v_mes % 3 when 0 then 'Salão'
+                                    when 1 then 'Cinema'
+                                    else 'Roupas' end;
+    v_val_gira_b := case v_mes % 3 when 0 then 9000 + v_mes * 500
+                                   when 1 then 7600
+                                   else 19900 end;
+
+    -- Ciclo dos lugares, para o mapa ter pinos em pontos diferentes e o ranking
+    -- não ser sempre o mesmo par.
+    v_lugar_a := case v_mes % 3 when 0 then 'Supermercado Bahamas'
+                                when 1 then 'Mercado Central'
+                                else 'Hortifruti da Dona Lu' end;
+    v_lat_a := case v_mes % 3 when 0 then -21.7587 when 1 then -21.7625 else -21.7541 end;
+    v_lon_a := case v_mes % 3 when 0 then -43.3496 when 1 then -43.3502 else -43.3548 end;
+
+    v_lugar_b := case v_mes % 2 when 0 then 'Café da Praça' else 'Padaria Pão Quente' end;
+    v_desc_b  := case v_mes % 2 when 0 then 'Café' else 'Pão e leite' end;
+    v_val_b   := case v_mes % 2 when 0 then 4300 else 3100 end;
+    v_lat_b   := case v_mes % 2 when 0 then -21.7612 else -21.7668 end;
+    v_lon_b   := case v_mes % 2 when 0 then -43.3471 else -43.3519 end;
+
+    -- Cinco sem local: salário, aluguel, compras do mês e os dois que giram.
     insert into public.transactions
       (user_id, kind, amount_cents, description, category_id, occurred_on)
     values
       (p_user, 'income', 520000, 'Salário', v_cat_salario, v_dia + 4),
+      (p_user, 'expense', 148000, 'Aluguel', v_cat_moradia, v_dia + 2),
       (p_user, 'expense', 38500, 'Compras do mês', v_cat_alimentacao, v_dia + 5),
-      (p_user, 'expense', 12000, 'Combustível', v_cat_transporte, v_dia + 9),
-      (p_user, 'expense', 9000 + v_mes * 500, 'Salão', v_cat_beleza, v_dia + 14),
-      (p_user, 'expense', 7600, 'Cinema', v_cat_lazer, v_dia + 19);
+      (p_user, 'expense', v_val_gira_a, v_desc_gira_a, v_cat_gira_a, v_dia + 9),
+      (p_user, 'expense', v_val_gira_b, v_desc_gira_b, v_cat_gira_b, v_dia + 14);
 
-    -- alguns gastos com local, para o mapa ter o que mostrar
+    -- Dois com local, para o mapa ter o que mostrar.
     insert into public.transactions
       (user_id, kind, amount_cents, description, category_id, occurred_on,
        latitude, longitude, place_name)
     values
       (p_user, 'expense', 15400, 'Mercado', v_cat_alimentacao, v_dia + 7,
-       -21.7587, -43.3496, 'Supermercado Bahamas'),
-      (p_user, 'expense', 4300, 'Café', v_cat_alimentacao, v_dia + 12,
-       -21.7612, -43.3471, 'Café da Praça');
+       v_lat_a, v_lon_a, v_lugar_a),
+      (p_user, 'expense', v_val_b, v_desc_b, v_cat_alimentacao, v_dia + 12,
+       v_lat_b, v_lon_b, v_lugar_b);
   end loop;
 
   insert into public.tasks (user_id, title, due_date)
