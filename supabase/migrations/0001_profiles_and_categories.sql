@@ -4,7 +4,9 @@ create extension if not exists pgcrypto with schema extensions;
 -- ---------- profiles ----------
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
-  name text not null default '',
+  -- Sem default: '' violaria o check abaixo, e handle_new_user sempre informa um
+  -- nome (coalesce para 'Visitante'), então nada depende de um valor implícito.
+  name text not null check (char_length(btrim(name)) between 1 and 80),
   is_guest boolean not null default false,
   is_admin boolean not null default false,
   privacy_accepted_at timestamptz,

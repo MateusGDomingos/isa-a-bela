@@ -51,7 +51,12 @@ export function parseAmountToCents(input: string): number | null {
   if (decimalPart !== '' && !/^[0-9]{1,2}$/.test(decimalPart)) return null;
 
   const cents = Number(integerPart) * 100 + Number(decimalPart.padEnd(2, '0') || '0');
-  if (!Number.isSafeInteger(cents) || cents <= 0) return null;
+  // `amount_cents` é um `integer` do Postgres (32 bits com sinal): 2_147_483_647 é o
+  // maior valor que a coluna aceita. Number.isSafeInteger não basta aqui, porque
+  // 9_999_999_999 (de "99.999.999,99") é um inteiro seguro em JS e ainda assim
+  // explode a coluna com 22003 — um erro que não vira mensagem de campo, porque não
+  // é um `check` (ver spec §10.2).
+  if (!Number.isSafeInteger(cents) || cents <= 0 || cents > 2_147_483_647) return null;
   return cents;
 }
 

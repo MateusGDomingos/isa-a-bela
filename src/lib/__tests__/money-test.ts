@@ -48,6 +48,12 @@ describe('parseAmountToCents', () => {
     expect(parseAmountToCents('R$ 1.234,56')).toBe(123456);
     expect(parseAmountToCents('R$ \u00a01.234,56')).toBe(123456);
   });
+
+  it('recusa valor que não cabe na coluna do banco', () => {
+    expect(parseAmountToCents('21474836,47')).toBe(2147483647);
+    expect(parseAmountToCents('21474836,48')).toBeNull();
+    expect(parseAmountToCents('99.999.999,99')).toBeNull();
+  });
 });
 
 describe('sumCents', () => {
