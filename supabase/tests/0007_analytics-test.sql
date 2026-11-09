@@ -12,7 +12,13 @@ values
   ('11111111-1111-1111-1111-111111111111', 'tab_view', 'financas', 'Juiz de Fora', 'MG', current_date - 1),
   ('11111111-1111-1111-1111-111111111111', 'tab_view', 'financas', 'Juiz de Fora', 'MG', current_date - 1),
   ('99999999-9999-9999-9999-999999999999', 'app_open', null, 'Belo Horizonte', 'MG', current_date - 1),
-  ('11111111-1111-1111-1111-111111111111', 'app_open', null, 'Juiz de Fora', 'MG', current_date - 200);
+  ('11111111-1111-1111-1111-111111111111', 'app_open', null, 'Juiz de Fora', 'MG', current_date - 200),
+  -- Os três dias em torno do corte de 90 dias: só estes pegam o off-by-one que a
+  -- Tarefa anterior (d341f0e) corrigiu. -91 e -200 ficam de um lado do `<=`, -89 do
+  -- outro; sem eles a asserção de retenção passaria igual sob o bug `<`.
+  ('99999999-9999-9999-9999-999999999999', 'app_open', null, 'Belo Horizonte', 'MG', current_date - 91),
+  ('99999999-9999-9999-9999-999999999999', 'app_open', null, 'Belo Horizonte', 'MG', current_date - 90),
+  ('99999999-9999-9999-9999-999999999999', 'app_open', null, 'Belo Horizonte', 'MG', current_date - 89);
 
 -- a tabela de eventos é fechada para o app
 select test_login_as('11111111-1111-1111-1111-111111111111');
@@ -64,7 +70,25 @@ select is(
 select test_logout();
 
 -- retenção e revogação
-select is(public.purge_old_analytics(90), 1, 'apaga o evento com mais de 90 dias');
+--
+-- O purge roda como instrução própria, separada da asserção. Combiná-las numa só
+-- consulta não funciona: o snapshot de uma instrução SQL é fixado no início dela, então
+-- uma leitura no mesmo SELECT não veria as linhas que a própria função, chamada mais
+-- cedo nessa instrução, já apagou — nem com CTE MATERIALIZED (confirmado ao vivo: a
+-- tentativa com CTE devolvia a contagem de ANTES do delete).
+select public.purge_old_analytics(90);
+
+-- Uma só asserção cobre as duas perguntas que pegam o off-by-one: o dia exatamente no
+-- corte (-90) já foi, e o dia seguinte (-89) sobrou.
+select results_eq(
+  $$
+    select
+      (select count(*)::int from public.analytics_events where occurred_on <= current_date - 90),
+      (select count(*)::int from public.analytics_events where occurred_on = current_date - 89)
+  $$,
+  $$ values (0, 1) $$,
+  'purga remove o dia do corte e tudo antes dele (sem off-by-one), preserva o dia seguinte'
+);
 
 select test_login_as('11111111-1111-1111-1111-111111111111');
 select is(public.erase_my_analytics(), 3, 'revogar apaga os três eventos do titular');

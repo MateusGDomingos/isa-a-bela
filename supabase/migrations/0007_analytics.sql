@@ -73,6 +73,12 @@ begin
   delete from public.analytics_events
    where occurred_on <= current_date - p_days;
   get diagnostics v_apagados = row_count;
+
+  -- O agregado "por dia e cidade" também é retido por 90 dias (seção 8 da spec).
+  -- Sem apagar aqui, analytics_daily sobrevive indefinidamente à purga dos eventos
+  -- que o originaram.
+  delete from public.analytics_daily where day <= current_date - p_days;
+
   return v_apagados;
 end $$;
 
@@ -90,13 +96,30 @@ as $$
 declare
   v_uid uuid := auth.uid();
   v_apagados integer;
+  v_dias date[];
+  v_dia date;
 begin
   if v_uid is null then
     raise exception 'sem usuário autenticado' using errcode = '28000';
   end if;
 
+  -- Guarda os dias que o titular tocou ANTES de apagar: depois do delete não há
+  -- mais como saber quais linhas de analytics_daily precisam ser recompostas.
+  select array_agg(distinct occurred_on) into v_dias
+    from public.analytics_events where user_id = v_uid;
+
   delete from public.analytics_events where user_id = v_uid;
   get diagnostics v_apagados = row_count;
+
+  -- Os eventos do titular já se foram, então o rollup desses dias recalcula o
+  -- agregado sem a contribuição dele — correto por construção, sem precisar
+  -- subtrair nada à mão. Isso é o que faz analytics_daily também esquecer
+  -- quem revogou, e não só analytics_events.
+  if v_dias is not null then
+    foreach v_dia in array v_dias loop
+      perform public.rollup_analytics(v_dia);
+    end loop;
+  end if;
 
   update public.profiles set analytics_consent = false where id = v_uid;
   return v_apagados;
