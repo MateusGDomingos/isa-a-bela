@@ -75,17 +75,21 @@ begin
 
     -- Ciclo dos lugares, para o mapa ter pinos em pontos diferentes e o ranking
     -- não ser sempre o mesmo par.
-    v_lugar_a := case v_mes % 3 when 0 then 'Supermercado Bahamas'
-                                when 1 then 'Mercado Central'
-                                else 'Hortifruti da Dona Lu' end;
-    v_lat_a := case v_mes % 3 when 0 then -21.7587 when 1 then -21.7625 else -21.7541 end;
-    v_lon_a := case v_mes % 3 when 0 then -43.3496 when 1 then -43.3502 else -43.3548 end;
+    -- Nomes inventados e coordenadas com duas casas decimais (resolução de ~1km, do
+    -- tamanho de um bairro), não quatro (resolução de ~10m, do tamanho de uma
+    -- esquina). Um demo público não precisa — e não deve — apontar o endereço real
+    -- de quem o escreveu.
+    v_lugar_a := case v_mes % 3 when 0 then 'Mercadinho da Esquina'
+                                when 1 then 'Empório Boa Vista'
+                                else 'Feira do Bairro' end;
+    v_lat_a := case v_mes % 3 when 0 then -21.75 when 1 then -21.78 else -21.72 end;
+    v_lon_a := case v_mes % 3 when 0 then -43.33 when 1 then -43.40 else -43.28 end;
 
-    v_lugar_b := case v_mes % 2 when 0 then 'Café da Praça' else 'Padaria Pão Quente' end;
+    v_lugar_b := case v_mes % 2 when 0 then 'Cafeteria Girassol' else 'Padaria Estrela' end;
     v_desc_b  := case v_mes % 2 when 0 then 'Café' else 'Pão e leite' end;
     v_val_b   := case v_mes % 2 when 0 then 4300 else 3100 end;
-    v_lat_b   := case v_mes % 2 when 0 then -21.7612 else -21.7668 end;
-    v_lon_b   := case v_mes % 2 when 0 then -43.3471 else -43.3519 end;
+    v_lat_b   := case v_mes % 2 when 0 then -21.80 else -21.70 end;
+    v_lon_b   := case v_mes % 2 when 0 then -43.35 else -43.31 end;
 
     -- Cinco sem local: salário, aluguel, compras do mês e os dois que giram.
     insert into public.transactions
@@ -117,15 +121,21 @@ begin
   insert into public.tasks (user_id, title, due_date, done, done_at)
   values (p_user, 'Renovar assinatura', current_date - 10, true, now() - interval '9 days');
 
+  -- `(data::text || ' hh:mm')::timestamp at time zone 'America/Sao_Paulo'` interpreta
+  -- o horário como hora de parede em São Paulo e só então converte para o instante
+  -- absoluto (timestamptz) que a coluna guarda. `(data)::timestamptz + interval` como
+  -- estava antes ancora em UTC: o almoço do meio-dia nascia marcado para as 9h e o
+  -- dentista das 14h30 para as 11h30 em qualquer dispositivo no fuso do Brasil — um
+  -- demo que existe para mostrar a tela Início não pode abrir com os horários errados.
   insert into public.appointments
     (user_id, title, starts_at, ends_at, location, reminder_minutes)
   values
     (p_user, 'Dentista',
-     (current_date + 2)::timestamptz + interval '14 hours 30 minutes',
-     (current_date + 2)::timestamptz + interval '15 hours 30 minutes',
+     ((current_date + 2)::text || ' 14:30')::timestamp at time zone 'America/Sao_Paulo',
+     ((current_date + 2)::text || ' 15:30')::timestamp at time zone 'America/Sao_Paulo',
      'Clínica Sorriso', 30),
     (p_user, 'Almoço com a Bia',
-     (current_date + 4)::timestamptz + interval '12 hours',
+     ((current_date + 4)::text || ' 12:00')::timestamp at time zone 'America/Sao_Paulo',
      null, 'Restaurante Itália', 60);
 end $$;
 

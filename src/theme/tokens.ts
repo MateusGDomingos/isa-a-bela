@@ -22,3 +22,16 @@ export const fonts = {
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 
 export const radii = { card: 16, item: 12, tabBar: 24, pill: 999 } as const;
+
+/**
+ * Converte um token "#RRGGBB" em "rgba(r,g,b,alpha)". Os ícones de aba usam isto
+ * para derivar o preenchimento ativo de `colors.accent` em vez de repetir o valor
+ * rosa como literal em cada arquivo — uma mudança de tema não pode deixar um
+ * ícone preso na cor antiga.
+ */
+export function withAlpha(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}

@@ -32,6 +32,14 @@ revoke update on public.profiles from anon, authenticated;
 grant update (name, privacy_accepted_at, privacy_version, location_consent, analytics_consent)
   on public.profiles to authenticated;
 
+-- A tabela não tem política de insert — só o gatilho cria perfis — mas o
+-- privilégio de INSERT chega sozinho via ALTER DEFAULT PRIVILEGES do schema
+-- public (a mesma lição da Tarefa 7) e carrega a concessão de coluna acima,
+-- inclusive is_admin e is_guest. Hoje nada é explorável só porque falta a
+-- política de insert; revogar o verbo fecha a lacuna em vez de depender
+-- dessa ausência como única defesa.
+revoke insert on public.profiles from anon, authenticated;
+
 -- ---------- categories ----------
 create table public.categories (
   id uuid primary key default gen_random_uuid(),

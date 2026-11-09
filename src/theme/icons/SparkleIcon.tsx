@@ -1,6 +1,8 @@
 import Svg, { Path } from 'react-native-svg';
 import type { TabIconProps } from '@/src/theme/icons/types';
-import { colors } from '@/src/theme/tokens';
+import { colors, withAlpha } from '@/src/theme/tokens';
+
+const FILL_ATIVO = withAlpha(colors.accent, 0.22);
 
 export function SparkleIcon({ size = 22, color = colors.textMuted, filled = false }: TabIconProps) {
   return (
@@ -11,7 +13,7 @@ export function SparkleIcon({ size = 22, color = colors.textMuted, filled = fals
         strokeWidth={1.6}
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill={filled ? 'rgba(194,69,110,0.22)' : 'none'}
+        fill={filled ? FILL_ATIVO : 'none'}
       />
       <Path
         d="M18 3.5v3M16.5 5h3M17.5 16.5v3M16 18h3"

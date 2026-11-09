@@ -1,6 +1,8 @@
 import Svg, { Path } from 'react-native-svg';
 import type { TabIconProps } from '@/src/theme/icons/types';
-import { colors } from '@/src/theme/tokens';
+import { colors, withAlpha } from '@/src/theme/tokens';
+
+const FILL_ATIVO = withAlpha(colors.accent, 0.22);
 
 export function TulipIcon({ size = 22, color = colors.textMuted, filled = false }: TabIconProps) {
   return (
@@ -11,7 +13,7 @@ export function TulipIcon({ size = 22, color = colors.textMuted, filled = false 
         strokeWidth={1.6}
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill={filled ? 'rgba(194,69,110,0.22)' : 'none'}
+        fill={filled ? FILL_ATIVO : 'none'}
       />
       <Path d="M12 13.6V21" stroke={color} strokeWidth={1.6} strokeLinecap="round" fill="none" />
       <Path
@@ -19,7 +21,7 @@ export function TulipIcon({ size = 22, color = colors.textMuted, filled = false 
         stroke={color}
         strokeWidth={1.6}
         strokeLinejoin="round"
-        fill={filled ? 'rgba(194,69,110,0.22)' : 'none'}
+        fill={filled ? FILL_ATIVO : 'none'}
       />
     </Svg>
   );

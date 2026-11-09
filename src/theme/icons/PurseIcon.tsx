@@ -1,6 +1,8 @@
 import Svg, { Path } from 'react-native-svg';
 import type { TabIconProps } from '@/src/theme/icons/types';
-import { colors } from '@/src/theme/tokens';
+import { colors, withAlpha } from '@/src/theme/tokens';
+
+const FILL_ATIVO = withAlpha(colors.accent, 0.22);
 
 export function PurseIcon({ size = 22, color = colors.textMuted, filled = false }: TabIconProps) {
   return (
@@ -11,7 +13,7 @@ export function PurseIcon({ size = 22, color = colors.textMuted, filled = false 
         strokeWidth={1.6}
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill={filled ? 'rgba(194,69,110,0.22)' : 'none'}
+        fill={filled ? FILL_ATIVO : 'none'}
       />
       <Path
         d="M8.6 9V7.6a3.4 3.4 0 0 1 6.8 0V9"
@@ -25,7 +27,7 @@ export function PurseIcon({ size = 22, color = colors.textMuted, filled = false 
         stroke={color}
         strokeWidth={1.6}
         strokeLinejoin="round"
-        fill={filled ? 'rgba(194,69,110,0.22)' : 'none'}
+        fill={filled ? FILL_ATIVO : 'none'}
       />
     </Svg>
   );

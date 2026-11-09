@@ -1,6 +1,8 @@
 import Svg, { Path, Rect } from 'react-native-svg';
 import type { TabIconProps } from '@/src/theme/icons/types';
-import { colors } from '@/src/theme/tokens';
+import { colors, withAlpha } from '@/src/theme/tokens';
+
+const FILL_ATIVO = withAlpha(colors.accent, 0.22);
 
 export function CalendarHeartIcon({
   size = 22,
@@ -18,7 +20,7 @@ export function CalendarHeartIcon({
         stroke={color}
         strokeWidth={1.6}
         strokeLinejoin="round"
-        fill={filled ? 'rgba(194,69,110,0.22)' : 'none'}
+        fill={filled ? FILL_ATIVO : 'none'}
       />
       <Path
         d="M8 3v4M16 3v4M3.5 9.5h17"
@@ -32,7 +34,7 @@ export function CalendarHeartIcon({
         stroke={color}
         strokeWidth={1.6}
         strokeLinejoin="round"
-        fill={filled ? 'rgba(194,69,110,0.22)' : 'none'}
+        fill={filled ? FILL_ATIVO : 'none'}
       />
     </Svg>
   );

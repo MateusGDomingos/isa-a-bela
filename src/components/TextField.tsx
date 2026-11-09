@@ -8,7 +8,7 @@ export type TextFieldProps = Omit<TextInputProps, 'value' | 'onChangeText'> & {
   error?: string;
 };
 
-export function TextField({ label, value, onChangeText, error, ...rest }: TextFieldProps) {
+export function TextField({ label, value, onChangeText, error, style, ...rest }: TextFieldProps) {
   return (
     <View style={{ marginBottom: spacing.md }}>
       <Text style={styles.label}>{label}</Text>
@@ -18,8 +18,12 @@ export function TextField({ label, value, onChangeText, error, ...rest }: TextFi
         value={value}
         onChangeText={onChangeText}
         placeholderTextColor={colors.textMuted}
-        style={[styles.field, error ? { borderColor: colors.danger } : null]}
         {...rest}
+        // `style` entra DEPOIS de `...rest` e some sob um array, não sozinho: um
+        // `{...rest}` espalhado depois do tema apagaria o campo inteiro, inclusive a
+        // borda vermelha de erro, se quem chama passar `style`. RN mescla arrays de
+        // estilo em ordem, então o do campo some ganha dos tokens só onde conflitar.
+        style={[styles.field, error ? { borderColor: colors.danger } : null, style]}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
