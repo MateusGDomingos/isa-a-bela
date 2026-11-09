@@ -68,8 +68,10 @@ as $$
 declare
   v_apagados integer;
 begin
+  -- `<=` e não `<`: com `<`, p_days = 90 retém hoje mais 90 dias anteriores, ou seja
+  -- 91 dias distintos, e a política de privacidade promete 90.
   delete from public.analytics_events
-   where occurred_on < current_date - p_days;
+   where occurred_on <= current_date - p_days;
   get diagnostics v_apagados = row_count;
   return v_apagados;
 end $$;

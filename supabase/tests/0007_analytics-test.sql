@@ -20,10 +20,6 @@ select is(
   (select count(*)::int from public.analytics_events),
   0, 'usuário comum não lê nenhum evento'
 );
-select is(
-  (select count(*)::int from public.analytics_daily),
-  0, 'usuário sem is_admin não lê o painel'
-);
 select throws_ok(
   $$ insert into public.analytics_events (user_id, event_type)
      values ('11111111-1111-1111-1111-111111111111', 'app_open') $$,
@@ -55,6 +51,16 @@ select is(
 );
 select hasnt_column('public', 'analytics_daily', 'user_id',
   'o painel agregado não tem coluna de usuário');
+select test_logout();
+
+-- Esta asserção precisa vir DEPOIS do rollup. Antes dele a tabela está vazia, e a
+-- verificação passaria mesmo que a política de admin não existisse — provaria apenas
+-- que uma tabela vazia tem zero linhas.
+select test_login_as('11111111-1111-1111-1111-111111111111');
+select is(
+  (select count(*)::int from public.analytics_daily),
+  0, 'usuário sem is_admin não lê o painel, nem com o painel populado'
+);
 select test_logout();
 
 -- retenção e revogação
