@@ -105,6 +105,50 @@ end $$;
 revoke all on function public.erase_my_analytics() from public, anon, authenticated, service_role;
 grant execute on function public.erase_my_analytics() to authenticated;
 
+-- analytics_events não tem política nenhuma, por desenho: nem o app nem o painel a
+-- leem. Mas o titular tem direito de receber os próprios eventos na exportação
+-- (LGPD art. 18, V), então este helper — e só ele — enxerga as linhas dele.
+create or replace function public.export_my_analytics()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(jsonb_agg(to_jsonb(e)), '[]'::jsonb)
+    from public.analytics_events e
+   where e.user_id = auth.uid();
+$$;
+
+revoke all on function public.export_my_analytics() from public, anon, authenticated, service_role;
+grant execute on function public.export_my_analytics() to authenticated;
+
+-- Completa export_my_data (criada em 0005_privacy_rights.sql) com a sexta chave.
+-- Precisa estar aqui, e não em 0005: analytics_events e export_my_analytics só
+-- existem a partir desta migration, e uma função `language sql` resolve seu corpo
+-- contra o catálogo no momento do CREATE FUNCTION, não no primeiro uso. security
+-- invoker continua certo para as outras cinco chaves — a RLS garante que só sai o
+-- que é do próprio titular; analytics_events é a única exceção, e por isso entra
+-- via export_my_analytics(), um helper definer escopado em auth.uid(), e não por
+-- subselect direto aqui.
+create or replace function public.export_my_data()
+returns jsonb
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'exported_at', now(),
+    'profile', (select to_jsonb(p) from public.profiles p where p.id = auth.uid()),
+    'categories', coalesce((select jsonb_agg(to_jsonb(c)) from public.categories c), '[]'::jsonb),
+    'transactions', coalesce((select jsonb_agg(to_jsonb(t)) from public.transactions t), '[]'::jsonb),
+    'tasks', coalesce((select jsonb_agg(to_jsonb(k)) from public.tasks k), '[]'::jsonb),
+    'appointments', coalesce((select jsonb_agg(to_jsonb(a)) from public.appointments a), '[]'::jsonb),
+    'analytics_events', public.export_my_analytics()
+  );
+$$;
+
 do $$
 begin
   if exists (select 1 from pg_available_extensions where name = 'pg_cron') then

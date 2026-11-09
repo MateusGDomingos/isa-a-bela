@@ -1,5 +1,13 @@
 -- Portabilidade (LGPD art. 18, V). security invoker: a RLS garante
 -- que só sai o que é do próprio titular.
+--
+-- Esta versão ainda não inclui analytics_events: a tabela só nasce na migration
+-- 0007, e `language sql` resolve o corpo contra o catálogo na hora do CREATE
+-- FUNCTION (diferente de plpgsql, que só resolve no primeiro uso) — então uma
+-- função SQL aqui que já referenciasse analytics_events quebraria o `db reset`
+-- com "relation does not exist". A migration 0007 substitui esta função (mesmo
+-- nome, mesma assinatura) para acrescentar a sexta chave depois que a tabela e o
+-- helper de leitura existirem.
 create or replace function public.export_my_data()
 returns jsonb
 language sql

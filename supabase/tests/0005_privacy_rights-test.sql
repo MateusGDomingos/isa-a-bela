@@ -5,6 +5,12 @@ select plan(10);
 select test_create_user('11111111-1111-1111-1111-111111111111', 'isa@exemplo.com');
 select test_create_user('22222222-2222-2222-2222-222222222222', 'outra@exemplo.com');
 
+-- Seedado como postgres (sem RLS): analytics_events não tem política de insert para
+-- ninguém, nem para o próprio titular. É assim que o termo entra não-vazio na soma
+-- final, para a asserção não passar por tabela vazia.
+insert into public.analytics_events (user_id, event_type, city, region, occurred_on)
+values ('11111111-1111-1111-1111-111111111111', 'app_open', 'Juiz de Fora', 'MG', current_date);
+
 select test_login_as('22222222-2222-2222-2222-222222222222');
 insert into public.tasks (user_id, title)
 values ('22222222-2222-2222-2222-222222222222', 'Tarefa da outra pessoa');
@@ -81,8 +87,13 @@ select is(
   + (select count(*)::int from public.categories
     where user_id = '11111111-1111-1111-1111-111111111111')
   + (select count(*)::int from public.profiles
+    where id = '11111111-1111-1111-1111-111111111111')
+  + (select count(*)::int from public.analytics_events
+    where user_id = '11111111-1111-1111-1111-111111111111')
+  + (select count(*)::int from auth.users
     where id = '11111111-1111-1111-1111-111111111111'),
-  0, 'excluir a conta apaga perfil, categorias, lançamentos, tarefas e compromissos'
+  0, 'excluir a conta apaga perfil, categorias, lançamentos, tarefas, compromissos, '
+     'eventos de uso e o próprio usuário em auth.users'
 );
 
 select * from finish();
