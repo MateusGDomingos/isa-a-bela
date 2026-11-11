@@ -9,7 +9,12 @@ jobs:
   verificar:
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth: 0 porque o gitleaks varre um intervalo de commits e o clone
+      # raso padrão não traz o histórico — na primeira execução real ele falhou com
+      # "unknown revision", sem haver segredo nenhum vazado.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
