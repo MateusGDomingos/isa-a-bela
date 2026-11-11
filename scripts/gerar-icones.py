@@ -6,14 +6,21 @@ sobre fundo rosa (seção 4 da spec). Em vez de depender de um arquivo binário 
 ninguém sabe de onde veio, a tulipa é descrita aqui em coordenadas: dá para ler,
 revisar num diff e regerar em qualquer tamanho.
 
+Requer Pillow, a única dependência fora do npm neste repositório:
+
+    pip install --user Pillow
+
 Uso: python3 scripts/gerar-icones.py
+
+Os PNG gerados são versionados, então rodar isto só é necessário ao mudar o desenho
+ou as cores. O fundo do splash e do ícone adaptativo são definidos em app.json, não
+aqui — mantenha os dois em sincronia com src/theme/tokens.ts.
 """
 
 from PIL import Image, ImageDraw
 
 # Tokens de src/theme/tokens.ts. Mantenha em sincronia com eles.
 ROSA_FUNDO = (194, 69, 110, 255)  # colors.accent  #C2456E
-ROSA_CLARO = (255, 246, 248, 255)  # colors.background #FFF6F8
 BRANCO = (255, 255, 255, 255)
 FOLHA = (248, 214, 226, 255)  # rosa claro: contrasta com o fundo sem competir com a flor
 ZOOM = 1.20  # a flor ocupa mais do quadro; sem isso sobra margem morta no topo
