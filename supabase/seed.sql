@@ -1,0 +1,3 @@
+-- Intencionalmente vazio: nenhum dado de seed é necessário por ora.
+-- A presença deste arquivo evita o aviso "no files matched pattern:
+-- supabase/seed.sql" do `supabase db reset`.

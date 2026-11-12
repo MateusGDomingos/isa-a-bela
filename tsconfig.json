@@ -1,0 +1,15 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    // Lista explícita de @types/* globais a incluir. Sem "jest" aqui, os
+    // matchers globais do Jest (describe/it/expect) não teriam tipos. Mas
+    // atenção: listar "types" também DESLIGA a inclusão automática de todo
+    // outro @types/* instalado — qualquer novo @types/* precisa ser
+    // adicionado a este array manualmente para ser reconhecido.
+    "types": ["jest"],
+    "paths": { "@/*": ["./*"] }
+  },
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+}
