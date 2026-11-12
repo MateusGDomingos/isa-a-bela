@@ -42,10 +42,15 @@ Todo push na branch `main` e todo pull request disparam o workflow [`ci`](.githu
 4. **Supabase CLI** — instala a CLI usada pelos dois passos seguintes.
 5. **Banco local e migrations** — `supabase start`, que sobe um Postgres local via Docker e aplica todas as migrations. É o passo mais lento do pipeline, por baixar as imagens do Supabase; isso é esperado.
 6. **Testes de banco (pgTAP)** — `supabase test db supabase/tests/*-test.sql`: 94 asserções em 8 arquivos, cobrindo RLS, agregados, direitos de LGPD, modo visitante e métricas. O glob é explícito porque `supabase test db` sem argumento também tentaria rodar `helpers.sql` como teste — ele não tem `plan()` e falharia sem nenhum defeito no código.
-7. **Auditoria de dependências** — `npm audit --audit-level=high`. Hoje não há vulnerabilidade alta ou crítica. Existem 31 vulnerabilidades moderadas/baixas em dependências transitivas de ferramentas de build (cadeia interna do Jest, `glob`, `minimatch`, `@typescript-eslint`) sem correção que não exija um salto de major breaking (ex.: Jest 29, Expo 52); nenhuma chega ao limiar `high`, então o passo não precisa de supressão.
+7. **Auditoria de dependências** — `npm audit --audit-level=high`. Sem vulnerabilidade alta ou crítica. Restam 9 de severidade baixa, todas com a mesma origem: `deepmerge`, puxado pelo `jest-config`. A última versão publicada (4.3.1) **é** a vulnerável, então não há correção para aplicar; o pacote só é carregado pelo executor de testes e nunca entra no pacote do aplicativo.
+
+   As vulnerabilidades de `glob` e `minimatch` foram corrigidas com `overrides` por faixa de versão no `package.json`, elevando apenas as versões afetadas e deixando intactas as anteriores à faixa vulnerável (`glob@7`, `minimatch@3`), cuja API é incompatível com as novas.
+
+   **Não use `npm audit fix --force` neste projeto.** Ele não corrige: rebaixa. Numa tentativa anterior ele levou o `expo` de 58 para 52 e o `eslint-config-expo` de 58 para 6, e o resultado foi _pior_ — 4 vulnerabilidades críticas e 4 altas que não existiam antes, incluindo execução arbitrária de código via `babel-traverse`.
+
 8. **Segredo vazado** — `gitleaks` varre o diff por segredos commitados.
 
-Qualquer passo vermelho bloqueia o merge — mas só se a branch `main` estiver protegida. Configure em GitHub: Settings → Branches → Branch protection rule para `main`, exigindo o status check `verificar` e bloqueando push direto (sempre exigir pull request antes de mesclar).
+Qualquer passo vermelho bloqueia o merge: a branch `main` está protegida e exige o status check `verificar`, sem push forçado e sem exclusão.
 
 ## Variáveis de ambiente
 
