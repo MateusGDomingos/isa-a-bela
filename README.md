@@ -44,7 +44,9 @@ Todo push na branch `main` e todo pull request disparam o workflow [`ci`](.githu
 6. **Testes de banco (pgTAP)** — `supabase test db supabase/tests/*-test.sql`: 94 asserções em 8 arquivos, cobrindo RLS, agregados, direitos de LGPD, modo visitante e métricas. O glob é explícito porque `supabase test db` sem argumento também tentaria rodar `helpers.sql` como teste — ele não tem `plan()` e falharia sem nenhum defeito no código.
 7. **Auditoria de dependências** — `npm audit --audit-level=high`. Sem vulnerabilidade alta ou crítica. Restam 9 de severidade baixa, todas com a mesma origem: `deepmerge`, puxado pelo `jest-config`. A última versão publicada (4.3.1) **é** a vulnerável, então não há correção para aplicar; o pacote só é carregado pelo executor de testes e nunca entra no pacote do aplicativo.
 
-   As vulnerabilidades de `glob` e `minimatch` foram corrigidas com `overrides` por faixa de versão no `package.json`, elevando apenas as versões afetadas e deixando intactas as anteriores à faixa vulnerável (`glob@7`, `minimatch@3`), cuja API é incompatível com as novas.
+   As vulnerabilidades de `glob` e `minimatch` foram corrigidas com `overrides` escopados por pacote pai no `package.json`, elevando só onde a versão instalada caía na faixa vulnerável. O `minimatch@3` que o `eslint` e seus plugins usam fica intacto: a API dele é incompatível com a linha 11, e um override global quebraria o lint.
+
+   **Ao mexer em dependências, gere o lock com `npx npm@10`**, a mesma linha que o CI usa (Node 22). O npm 12 não grava o campo `overrides` no `package-lock.json`, e o lock que ele produz é recusado pelo `npm ci` com "Missing: glob@... from lock file".
 
    **Não use `npm audit fix --force` neste projeto.** Ele não corrige: rebaixa. Numa tentativa anterior ele levou o `expo` de 58 para 52 e o `eslint-config-expo` de 58 para 6, e o resultado foi _pior_ — 4 vulnerabilidades críticas e 4 altas que não existiam antes, incluindo execução arbitrária de código via `babel-traverse`.
 
